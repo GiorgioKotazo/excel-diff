@@ -1,27 +1,35 @@
-//! CLI utility that compares two Excel sheets and writes the differences to a new `.xlsx` file.
+//! CLI utility that compares two Excel sheets and writes the differences to a file or stdout.
 
-use rust_xlsxwriter::{Format, Workbook};
 use std::env;
 use std::path::Path;
 
 mod column;
 mod excel;
+mod output;
 
 use column::col_letter_to_index;
 use excel::read_pairs;
+use output::{write_csv, write_stdout, write_tsv, write_txt, write_xlsx};
 
 /// Entry point. Expects 9 positional CLI arguments (10th for output is optional).
 ///
 /// Arguments: `<file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output]`
+///
+/// Output format is inferred from the file extension:
+///   `.xlsx` — Excel workbook (default)
+///   `.csv`  — Comma-separated values
+///   `.tsv`  — Tab-separated values
+///   `.txt`  — Plain text
+///   `-`     — Print plain text to stdout (useful for piping)
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 9 || args.len() > 10 {
         eprintln!(
-            "Usage: {} <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output.xlsx]",
+            "Usage: {} <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output]",
             args[0]
         );
         eprintln!(
-            "Example: {} 'example_1.xlsx' 'list_1' D E 'example_2.xlsx' 'list_2' D E result.xlsx",
+            "Example: {} 'example_1.xlsx' 'list_1' D E 'example_2.xlsx' 'list_2' D E result.csv",
             args[0]
         );
         std::process::exit(1);
@@ -42,6 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         "diff_result.xlsx".to_string()
     };
+    let stdout_mode = output_path == "-";
 
     if !Path::new(file1).exists() {
         return Err(format!("File not found: {}", file1).into());
@@ -56,53 +65,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let only_in_1: Vec<(String, String)> = set1.difference(&set2).cloned().collect();
     let only_in_2: Vec<(String, String)> = set2.difference(&set1).cloned().collect();
 
-    let mut workbook = Workbook::new();
-    let ws = workbook.add_worksheet();
-    ws.set_name("Diff")?;
+    if stdout_mode {
+        write_stdout(file1, sheet1, file2, sheet2, &only_in_1, &only_in_2)?;
+        eprintln!("File 1 total rows: {}", set1.len());
+        eprintln!("File 2 total rows: {}", set2.len());
+        eprintln!("New: {} rows", only_in_1.len());
+        eprintln!("Deleted: {} rows", only_in_2.len());
+    } else {
+        let ext = Path::new(&output_path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("xlsx")
+            .to_lowercase();
 
-    let bold = Format::new().set_bold();
+        match ext.as_str() {
+            "csv" => write_csv(&output_path, &only_in_1, &only_in_2)?,
+            "tsv" => write_tsv(&output_path, &only_in_1, &only_in_2)?,
+            "txt" => write_txt(
+                &output_path,
+                file1,
+                sheet1,
+                file2,
+                sheet2,
+                &only_in_1,
+                &only_in_2,
+            )?,
+            _ => write_xlsx(
+                &output_path,
+                file1,
+                sheet1,
+                file2,
+                sheet2,
+                &only_in_1,
+                &only_in_2,
+            )?,
+        }
 
-    // Table 1: only in file 1
-    ws.write_string_with_format(
-        0,
-        0,
-        format!("UNIQUE VALUES from file \"{}\" list \"{}\"", file1, sheet1),
-        &bold,
-    )?;
-    ws.write_string_with_format(1, 0, "Name", &bold)?;
-    ws.write_string_with_format(1, 1, "Number", &bold)?;
-    for (i, (name, num)) in only_in_1.iter().enumerate() {
-        let row = (i + 2) as u32;
-        ws.write_string(row, 0, name)?;
-        ws.write_string(row, 1, num)?;
+        println!("Result saved to: {}", output_path);
+        println!("  File 1 total rows: {}", set1.len());
+        println!("  File 2 total rows: {}", set2.len());
+        println!("  New: {} rows", only_in_1.len());
+        println!("  Deleted: {} rows", only_in_2.len());
     }
-
-    // empty gap
-    let gap_row = (only_in_1.len() + 3) as u32;
-
-    // Table 2: only in file 2
-    ws.write_string_with_format(
-        gap_row,
-        0,
-        format!("UNIQUE VALUES from file \"{}\" list \"{}\"", file2, sheet2),
-        &bold,
-    )?;
-    let header2 = gap_row + 1;
-    ws.write_string_with_format(header2, 0, "Name", &bold)?;
-    ws.write_string_with_format(header2, 1, "Number", &bold)?;
-    for (i, (name, num)) in only_in_2.iter().enumerate() {
-        let row = header2 + 1 + (i as u32);
-        ws.write_string(row, 0, name)?;
-        ws.write_string(row, 1, num)?;
-    }
-
-    workbook.save(&output_path)?;
-
-    println!("Result saved to: {}", output_path);
-    println!("  File 1 total rows: {}", set1.len());
-    println!("  File 2 total rows: {}", set2.len());
-    println!("  New: {} rows", only_in_1.len());
-    println!("  Deleted: {} rows", only_in_2.len());
 
     Ok(())
 }

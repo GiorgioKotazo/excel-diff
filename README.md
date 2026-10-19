@@ -55,7 +55,7 @@ cargo build --release
 ## Usage
 
 ```bash
-excel-diff <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output.xlsx]
+excel-diff <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output]
 ```
 
 ### Arguments
@@ -70,7 +70,17 @@ excel-diff <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> 
 | 6 | `sheet2` | Sheet name in the second file |
 | 7 | `name_col2` | Column letter for the primary key in the second file |
 | 8 | `num_col2` | Column letter for the secondary value in the second file |
-| 9 | `output.xlsx` | *(Optional)* Output file name. Defaults to `diff_result.xlsx` |
+| 9 | `output` | *(Optional)* Output file. Defaults to `diff_result.xlsx` |
+
+### Output formats (inferred from file extension)
+
+| Extension | Format |
+|-----------|--------|
+| `.xlsx` | Excel workbook (default) |
+| `.csv` | Comma-separated values |
+| `.tsv` | Tab-separated values |
+| `.txt` | Plain text |
+| `-` | Print plain text to stdout (useful for piping) |
 
 > **Tip:** Column letters are case-insensitive (`d` and `D` are the same).
 
@@ -81,16 +91,31 @@ excel-diff <file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> 
 ### Linux / macOS
 
 ```bash
+# Excel output (default)
 ./excel-diff \
   "example_1.xlsx" "list_1" D E \
   "example_2.xlsx" "list_2" D E \
   result.xlsx
+
+# CSV output
+./excel-diff \
+  "example_1.xlsx" "list_1" D E \
+  "example_2.xlsx" "list_2" D E \
+  result.csv
+
+# Pipe to another command
+./excel-diff \
+  "example_1.xlsx" "list_1" D E \
+  "example_2.xlsx" "list_2" D E \
+  - | grep "Alice"
 ```
 
 ### Windows (Command Prompt / PowerShell)
 
 ```powershell
 .\excel-diff.exe "example_1.xlsx" "list_1" D E "example_2.xlsx" "list_2" D E result.xlsx
+
+.\excel-diff.exe "example_1.xlsx" "list_1" D E "example_2.xlsx" "list_2" D E result.csv
 ```
 
 ### Windows (Batch file)
