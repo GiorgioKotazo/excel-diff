@@ -1,22 +1,23 @@
-use calamine::{open_workbook, DataType, Reader, Xlsx};
+use calamine::{open_workbook, Data, Reader, Xlsx};
 use std::collections::HashSet;
 
-pub fn cell_to_string(cell: &DataType) -> String {
+pub fn cell_to_string(cell: &Data) -> String {
     match cell {
-        DataType::String(s) => s.trim().to_string(),
-        DataType::Int(i) => i.to_string(),
-        DataType::Float(f) => {
+        Data::String(s) => s.trim().to_string(),
+        Data::Int(i) => i.to_string(),
+        Data::Float(f) => {
             if f.fract() == 0.0 {
                 format!("{:.0}", f)
             } else {
                 f.to_string()
             }
         }
-        DataType::Bool(b) => b.to_string(),
-        DataType::DateTime(d) => d.to_string(),
-        DataType::Duration(d) => d.to_string(),
-        DataType::Empty => String::new(),
-        _ => String::new(),
+        Data::Bool(b) => b.to_string(),
+        Data::DateTime(d) => d.to_string(),
+        Data::DateTimeIso(s) => s.clone(),
+        Data::DurationIso(s) => s.clone(),
+        Data::Error(e) => e.to_string(),
+        Data::Empty => String::new(),
     }
 }
 
@@ -29,7 +30,7 @@ pub fn read_pairs(
     let mut wb: Xlsx<_> = open_workbook(path)?;
     let range = wb
         .worksheet_range(sheet)
-        .ok_or(format!("Sheet '{}' not found in {}", sheet, path))??;
+        .map_err(|e| format!("Sheet '{}' not found in {}: {}", sheet, path, e))?;
 
     let mut set = HashSet::new();
     for row in range.rows() {
