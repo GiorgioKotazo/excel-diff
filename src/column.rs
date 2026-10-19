@@ -22,3 +22,33 @@ pub fn col_letter_to_index(letter: &str) -> Result<usize, Box<dyn std::error::Er
     }
     Ok(idx - 1)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_letters() {
+        assert_eq!(col_letter_to_index("A").unwrap(), 0);
+        assert_eq!(col_letter_to_index("Z").unwrap(), 25);
+    }
+
+    #[test]
+    fn test_multiletter() {
+        assert_eq!(col_letter_to_index("AA").unwrap(), 26);
+        assert_eq!(col_letter_to_index("AB").unwrap(), 27);
+    }
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(col_letter_to_index("d").unwrap(), 3);
+        assert_eq!(col_letter_to_index("aa").unwrap(), 26);
+    }
+
+    #[test]
+    fn test_invalid_characters() {
+        assert!(col_letter_to_index("123").is_err());
+        assert!(col_letter_to_index("").is_err());
+        assert!(col_letter_to_index("A1").is_err());
+    }
+}

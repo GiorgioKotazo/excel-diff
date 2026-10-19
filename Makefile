@@ -4,10 +4,8 @@
 # Available targets:
 #   check      - Run all static checks (fmt + clippy)
 #   test       - Run all tests (unit, integration, doc)
-#   test-all   - Run all tests including ignored benchmarks
 #   doc        - Generate documentation
 #   build      - Build release binary
-#   bench      - Run benchmarks only
 #   clean      - Clean build artifacts
 #   all        - Run all checks and tests (default)
 #
@@ -16,7 +14,7 @@
 #   clippy     - Run clippy only (fast)
 #   verify     - Full verification suite (check + test + doc + build)
 
-.PHONY: all check test test-all doc build bench clean fmt clippy verify
+.PHONY: all check test doc build clean fmt clippy verify
 
 # Default target
 all: check test
@@ -37,12 +35,6 @@ test:
 	cargo test || (echo "❌ Tests failed"; exit 1)
 	@echo "✅ All tests passed"
 
-# Run all tests including ignored benchmarks (slower)
-test-all:
-	@echo "=== Running cargo test (including ignored benchmarks) ==="
-	cargo test -- --include-ignored || (echo "❌ Tests failed"; exit 1)
-	@echo "✅ All tests (including benchmarks) passed"
-
 # Generate documentation
 doc:
 	@echo "=== Running cargo doc --no-deps ==="
@@ -56,12 +48,6 @@ build:
 	cargo build --release || (echo "❌ Build failed"; exit 1)
 	@echo "✅ Release build completed"
 	@echo "Binary available at: target/release/mercury-tool-shell"
-
-# Run benchmarks (ignored tests)
-bench:
-	@echo "=== Running cargo bench ==="
-	cargo bench || (echo "❌ Benchmarks failed"; exit 1)
-	@echo "✅ Benchmarks completed"
 
 # Clean build artifacts
 clean:
