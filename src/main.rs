@@ -1,5 +1,6 @@
 use rust_xlsxwriter::{Format, Workbook};
 use std::env;
+use std::path::Path;
 
 mod column;
 mod excel;
@@ -23,19 +24,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let file1 = &args[1];
     let sheet1 = &args[2];
-    let name_col1 = col_letter_to_index(&args[3]);
-    let num_col1 = col_letter_to_index(&args[4]);
+    let name_col1 = col_letter_to_index(&args[3])?;
+    let num_col1 = col_letter_to_index(&args[4])?;
 
     let file2 = &args[5];
     let sheet2 = &args[6];
-    let name_col2 = col_letter_to_index(&args[7]);
-    let num_col2 = col_letter_to_index(&args[8]);
+    let name_col2 = col_letter_to_index(&args[7])?;
+    let num_col2 = col_letter_to_index(&args[8])?;
 
     let output_path = if args.len() == 10 {
         args[9].clone()
     } else {
         "diff_result.xlsx".to_string()
     };
+
+    if !Path::new(file1).exists() {
+        return Err(format!("File not found: {}", file1).into());
+    }
+    if !Path::new(file2).exists() {
+        return Err(format!("File not found: {}", file2).into());
+    }
 
     let set1 = read_pairs(file1, sheet1, name_col1, num_col1)?;
     let set2 = read_pairs(file2, sheet2, name_col2, num_col2)?;
