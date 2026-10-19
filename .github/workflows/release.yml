@@ -19,7 +19,7 @@ jobs:
           - os: macos-latest
             artifact: excel-diff-macos-x64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - run: cargo build --release
       - name: Rename binary
@@ -30,7 +30,7 @@ jobs:
           else
             mv target/release/excel-diff target/release/${{ matrix.artifact }}
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact }}
           path: target/release/${{ matrix.artifact }}
@@ -40,7 +40,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           path: artifacts
       - run: ls -R artifacts
