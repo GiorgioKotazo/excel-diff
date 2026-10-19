@@ -1,65 +1,11 @@
-use calamine::{open_workbook, DataType, Reader, Xlsx};
 use rust_xlsxwriter::{Format, Workbook};
-use std::collections::HashSet;
 use std::env;
 
-fn col_letter_to_index(letter: &str) -> usize {
-    let mut idx = 0usize;
-    for c in letter.chars() {
-        let c = c.to_ascii_uppercase();
-        if c.is_ascii_uppercase() {
-            idx = idx * 26 + ((c as usize) - ('A' as usize) + 1);
-        }
-    }
-    if idx == 0 {
-        panic!("Invalid column letter: {}", letter);
-    }
-    idx - 1
-}
+mod column;
+mod excel;
 
-fn cell_to_string(cell: &DataType) -> String {
-    match cell {
-        DataType::String(s) => s.trim().to_string(),
-        DataType::Int(i) => i.to_string(),
-        DataType::Float(f) => {
-            if f.fract() == 0.0 {
-                format!("{:.0}", f)
-            } else {
-                f.to_string()
-            }
-        }
-        DataType::Bool(b) => b.to_string(),
-        DataType::DateTime(d) => d.to_string(),
-        DataType::Duration(d) => d.to_string(),
-        DataType::Empty => String::new(),
-        _ => String::new(),
-    }
-}
-
-fn read_pairs(
-    path: &str,
-    sheet: &str,
-    name_col: usize,
-    num_col: usize,
-) -> Result<HashSet<(String, String)>, Box<dyn std::error::Error>> {
-    let mut wb: Xlsx<_> = open_workbook(path)?;
-    let range = wb
-        .worksheet_range(sheet)
-        .ok_or(format!("Sheet '{}' not found in {}", sheet, path))??;
-
-    let mut set = HashSet::new();
-    for row in range.rows() {
-        if name_col >= row.len() || num_col >= row.len() {
-            continue;
-        }
-        let name = cell_to_string(&row[name_col]);
-        let num = cell_to_string(&row[num_col]);
-        if !name.is_empty() || !num.is_empty() {
-            set.insert((name, num));
-        }
-    }
-    Ok(set)
-}
+use column::col_letter_to_index;
+use excel::read_pairs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -69,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             args[0]
         );
         eprintln!(
-            "Example: {} 'NEW.xlsx' 'WQ OCT' D E 'REV.xlsx' 'WQ2 October' D E result.xlsx",
+            "Example: {} 'example_1.xlsx' 'list_1' D E 'example_2.xlsx' 'list_2' D E result.xlsx",
             args[0]
         );
         std::process::exit(1);
