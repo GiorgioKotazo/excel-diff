@@ -1,0 +1,8 @@
+[package]
+name = "excel-diff"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+calamine = "0.22"
+rust_xlsxwriter = "0.84"
