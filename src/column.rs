@@ -1,3 +1,6 @@
+/// Convert an Excel column letter (e.g. `"A"`, `"D"`, `"AA"`) to a zero-based index.
+///
+/// Returns an error if the input is empty or contains non-alphabetic characters.
 pub fn col_letter_to_index(letter: &str) -> Result<usize, Box<dyn std::error::Error>> {
     if letter.is_empty() {
         return Err("Column letter cannot be empty".into());

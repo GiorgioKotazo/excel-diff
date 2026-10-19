@@ -1,3 +1,5 @@
+//! CLI utility that compares two Excel sheets and writes the differences to a new `.xlsx` file.
+
 use rust_xlsxwriter::{Format, Workbook};
 use std::env;
 use std::path::Path;
@@ -8,6 +10,9 @@ mod excel;
 use column::col_letter_to_index;
 use excel::read_pairs;
 
+/// Entry point. Expects 9 positional CLI arguments (10th for output is optional).
+///
+/// Arguments: `<file1> <sheet1> <name_col1> <num_col1> <file2> <sheet2> <name_col2> <num_col2> [output]`
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 9 || args.len() > 10 {

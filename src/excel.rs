@@ -1,6 +1,10 @@
 use calamine::{open_workbook, Data, Reader, Xlsx};
 use std::collections::HashSet;
 
+/// Convert a calamine `Data` cell into a plain `String`.
+///
+/// * Trims surrounding whitespace from strings.
+/// * Formats whole-number floats without a decimal point.
 pub fn cell_to_string(cell: &Data) -> String {
     match cell {
         Data::String(s) => s.trim().to_string(),
@@ -21,6 +25,10 @@ pub fn cell_to_string(cell: &Data) -> String {
     }
 }
 
+/// Read the specified columns from an Excel sheet and return a set of `(name, number)` pairs.
+///
+/// Rows that do not have values in both requested columns are skipped.
+/// The pair is inserted even if only one of the two cells is non-empty.
 pub fn read_pairs(
     path: &str,
     sheet: &str,
